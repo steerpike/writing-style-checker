@@ -15,7 +15,7 @@ This repository includes a GitHub Actions workflow that automatically creates re
    ```bash
    npm run release
    ```
-   
+
    This will:
    - Build the plugin
    - Bump the patch version (1.0.0 → 1.0.1)
