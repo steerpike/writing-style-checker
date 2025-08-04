@@ -23,6 +23,18 @@
     margin-bottom: 20px;
 }
 
+.issue-section {
+    margin-bottom: 25px;
+}
+
+.issue-section-title {
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    font-size: 16px;
+}
+
 .weasel-match {
     margin-bottom: 10px;
     padding: 8px;
@@ -44,6 +56,10 @@
 }
 
 .weasel-highlight {
+    font-weight: bold;
+}
+
+.passive-highlight {
     font-weight: bold;
 }
 
@@ -80,4 +96,5 @@
 .setting-item-info p {
     color: var(--text-muted);
     line-height: 1.5;
+    margin-bottom: 10px;
 }
