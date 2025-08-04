@@ -22,6 +22,7 @@ An Obsidian plugin that helps improve your writing by identifying "weasel words"
 ### Understanding Results
 
 The plugin will show:
+
 - Number of issues found (weasel words and/or passive voice)
 - Each issue in its surrounding context
 - Line numbers (if enabled)
@@ -30,12 +31,14 @@ The plugin will show:
 ### Common Issues Detected
 
 **Weasel Words:**
+
 - **Intensifiers**: very, quite, extremely, remarkably
 - **Vague quantities**: many, various, several, few, huge, tiny
 - **Hedging words**: fairly, mostly, largely, relatively
 - **Unclear qualifiers**: excellent, interesting, significant, substantial
 
 **Passive Voice:**
+
 - Forms of "to be" + past participles
 - Examples: "was written", "were made", "being analyzed", "has been completed"
 - Includes comprehensive list of irregular past participles
@@ -54,12 +57,14 @@ Access settings through **Settings → Plugin Options → Writing Style Checker*
 ## Tips for Better Writing
 
 **When the plugin finds weasel words:**
+
 1. **Remove unnecessary intensifiers**: "very good" → "excellent"
 2. **Use specific numbers**: "several people" → "twelve people"
 3. **Be more precise**: "quite big" → "doubled in size"
 4. **Strengthen statements**: "relatively important" → "crucial"
 
 **When the plugin finds passive voice:**
+
 1. **Make the subject active**: "The report was written by the team" → "The team wrote the report"
 2. **Take responsibility**: "Mistakes were made" → "We made mistakes"
 3. **Be direct**: "Decisions are being made" → "The board is making decisions"
@@ -73,16 +78,15 @@ Access settings through **Settings → Plugin Options → Writing Style Checker*
 
 ## Development
 
-This plugin combines functionality from two bash scripts:
-1. **Weasel word detection** - Using pattern matching to find weak language
-2. **Passive voice detection** - Using comprehensive irregular verb patterns to identify passive constructions
+This plugin is based on the excellent bash scripts created by **Matt Might** for detecting writing issues:
 
-The TypeScript version provides a more integrated experience within Obsidian while maintaining the same core functionality as the original command-line tools.
+**Original Source**: [Shell scripts for passive voice, weasel words, and duplicates](https://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/)
+
+The plugin combines functionality from two of Matt Might's bash scripts:
+
+1. **Weasel word detection** - Using pattern matching to find weak language that makes writing vague
+2. **Passive voice detection** - Using comprehensive irregular verb patterns to identify passive constructions
 
 ## Contributing
 
 Feel free to suggest improvements or report issues. Both the weasel words pattern and passive voice detection can be customized to fit different writing styles and requirements.
-
----
-
-*Clean, direct writing starts with identifying the patterns that weaken your message.*
