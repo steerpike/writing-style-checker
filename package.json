@@ -1,15 +1,16 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "writing-style-checker",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Checks your writing for weasel words and passive voice that makes text less precise and impactful.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"release": "npm run build && npm version patch && git push && git push --tags"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": ["obsidian", "plugin", "writing", "style", "weasel-words", "passive-voice"],
+	"author": "Steerpike",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

@@ -3,9 +3,8 @@
 	"name": "Writing Style Checker",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Checks your writing for weasel words and weak language that makes text less precise and impactful.",
-	"author": "Sam Dwyer",
-	"authorUrl": "",
-	"fundingUrl": "",
+	"description": "Checks your writing for weasel words and passive voice that makes text less precise and impactful.",
+	"author": "Steerpike",
+	"authorUrl": "https://github.com/steerpike",
 	"isDesktopOnly": false
 }

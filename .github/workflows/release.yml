@@ -1,0 +1,53 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Build plugin
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/*/}"
+          
+          # Create release notes
+          echo "## Release Notes" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### What's New in $tag" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "- Detects weasel words that weaken your writing" >> release_notes.md
+          echo "- Identifies passive voice constructions" >> release_notes.md
+          echo "- Provides visual feedback with highlighted results" >> release_notes.md
+          echo "- Customizable settings for detection patterns and colors" >> release_notes.md
+          echo "- Line number display for easy navigation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "1. Download the \`main.js\`, \`manifest.json\`, and \`styles.css\` files" >> release_notes.md
+          echo "2. Create a folder named \`writing-style-checker\` in your vault's \`.obsidian/plugins/\` directory" >> release_notes.md
+          echo "3. Place the downloaded files in this folder" >> release_notes.md
+          echo "4. Reload Obsidian and enable the plugin in settings" >> release_notes.md
+
+          gh release create "$tag" \
+            --title="Writing Style Checker $tag" \
+            --notes-file release_notes.md \
+            --draft \
+            main.js manifest.json styles.css

@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run build 2>&1 | tee build.log && ! grep -q "error" build.log
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Check required files exist
+        run: |
+          test -f main.js || (echo "main.js not found" && exit 1)
+          test -f manifest.json || (echo "manifest.json not found" && exit 1)
+          test -f styles.css || (echo "styles.css not found" && exit 1)
+          echo "All required files present"
+
+      - name: Validate manifest.json
+        run: |
+          if ! jq empty manifest.json; then
+            echo "manifest.json is not valid JSON"
+            exit 1
+          fi
+          echo "manifest.json is valid JSON"
