@@ -1,85 +1,119 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface WeaselMatch {
+	word: string;
+	line: number;
+	position: number;
+	context: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+interface WritingStyleSettings {
+	weaselWords: string;
+	customWordsFile: string;
+	highlightColor: string;
+	showLineNumbers: boolean;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+const DEFAULT_SETTINGS: WritingStyleSettings = {
+	weaselWords: 'many|various|very|fairly|several|extremely|exceedingly|quite|remarkably|few|surprisingly|mostly|largely|huge|tiny|((are|is) a number)|excellent|interestingly|significantly|substantially|clearly|vast|relatively|completely',
+	customWordsFile: '',
+	highlightColor: '#ff6b6b',
+	showLineNumbers: true
+}
+
+export default class WritingStyleChecker extends Plugin {
+	settings: WritingStyleSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		// Add ribbon icon
+		const ribbonIconEl = this.addRibbonIcon('view', 'Check Writing Style', (evt: MouseEvent) => {
+			this.checkCurrentDocument();
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		ribbonIconEl.addClass('writing-style-checker-ribbon');
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
+		// Add command to check writing style
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
+			id: 'check-writing-style',
+			name: 'Check writing style',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
+				this.checkWritingStyle(editor);
 			}
 		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
+
+		// Add command to check current document
 		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
+			id: 'check-current-document',
+			name: 'Check current document for weasel words',
+			callback: () => {
+				this.checkCurrentDocument();
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// Add settings tab
+		this.addSettingTab(new WritingStyleSettingTab(this.app, this));
+	}
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+	async checkCurrentDocument() {
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!activeView) {
+			new Notice('No active markdown document found');
+			return;
+		}
+
+		const editor = activeView.editor;
+		this.checkWritingStyle(editor);
+	}
+
+	async checkWritingStyle(editor: Editor) {
+		const content = editor.getValue();
+		const matches = this.findWeaselWords(content);
+
+		if (matches.length === 0) {
+			new Notice('No weasel words found! Your writing looks clean.');
+			return;
+		}
+
+		new WeaselWordsModal(this.app, matches, this.settings).open();
+	}
+
+	findWeaselWords(content: string): WeaselMatch[] {
+		const matches: WeaselMatch[] = [];
+		const lines = content.split('\n');
+
+		// Get weasel words pattern
+		let weaselPattern = this.settings.weaselWords;
+
+		// TODO: Add support for custom words file
+		// if (this.settings.customWordsFile) {
+		//     // Load custom words from file
+		// }
+
+		const regex = new RegExp(`\\b(${weaselPattern})\\b`, 'gi');
+
+		lines.forEach((line, lineIndex) => {
+			let match;
+			while ((match = regex.exec(line)) !== null) {
+				const contextStart = Math.max(0, match.index - 20);
+				const contextEnd = Math.min(line.length, match.index + match[0].length + 20);
+				const context = line.substring(contextStart, contextEnd);
+
+				matches.push({
+					word: match[0],
+					line: lineIndex + 1,
+					position: match.index,
+					context: context
+				});
+			}
+			regex.lastIndex = 0; // Reset regex for next line
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		return matches;
 	}
 
 	onunload() {
-
+		// Cleanup if needed
 	}
 
 	async loadSettings() {
@@ -91,44 +125,152 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
+class WeaselWordsModal extends Modal {
+	matches: WeaselMatch[];
+	settings: WritingStyleSettings;
+
+	constructor(app: App, matches: WeaselMatch[], settings: WritingStyleSettings) {
 		super(app);
+		this.matches = matches;
+		this.settings = settings;
 	}
 
 	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
+		const { contentEl } = this;
+		contentEl.empty();
+
+		// Title
+		contentEl.createEl('h2', { text: 'Writing Style Check Results' });
+
+		// Summary
+		const summary = contentEl.createEl('div', { cls: 'weasel-summary' });
+		summary.createEl('p', {
+			text: `Found ${this.matches.length} weasel word${this.matches.length === 1 ? '' : 's'} that could weaken your writing.`
+		});
+
+		// Results container
+		const resultsContainer = contentEl.createEl('div', { cls: 'weasel-results' });
+
+		this.matches.forEach((match, index) => {
+			const matchEl = resultsContainer.createEl('div', { cls: 'weasel-match' });
+
+			// Line number (if enabled)
+			if (this.settings.showLineNumbers) {
+				matchEl.createEl('span', {
+					text: `Line ${match.line}: `,
+					cls: 'weasel-line-number'
+				});
+			}
+
+			// Context with highlighted word
+			const contextEl = matchEl.createEl('span', { cls: 'weasel-context' });
+			const beforeWord = match.context.substring(0, match.context.toLowerCase().indexOf(match.word.toLowerCase()));
+			const afterWord = match.context.substring(beforeWord.length + match.word.length);
+
+			contextEl.appendText(beforeWord);
+			const highlightEl = contextEl.createEl('span', {
+				text: match.word,
+				cls: 'weasel-highlight'
+			});
+			highlightEl.style.backgroundColor = this.settings.highlightColor;
+			highlightEl.style.color = 'white';
+			highlightEl.style.padding = '2px 4px';
+			highlightEl.style.borderRadius = '3px';
+			contextEl.appendText(afterWord);
+		});
+
+		// Close button
+		const buttonContainer = contentEl.createEl('div', { cls: 'weasel-buttons' });
+		const closeButton = buttonContainer.createEl('button', { text: 'Close' });
+		closeButton.onclick = () => this.close();
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class WritingStyleSettingTab extends PluginSettingTab {
+	plugin: WritingStyleChecker;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: WritingStyleChecker) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
-
+		const { containerEl } = this;
 		containerEl.empty();
 
+		containerEl.createEl('h2', { text: 'Writing Style Checker Settings' });
+
+		// Weasel words pattern
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+			.setName('Weasel Words Pattern')
+			.setDesc('Regular expression pattern for detecting weasel words (separated by |)')
+			.addTextArea(text => text
+				.setPlaceholder('Enter weasel words pattern...')
+				.setValue(this.plugin.settings.weaselWords)
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.weaselWords = value;
 					await this.plugin.saveSettings();
+				}));
+
+		// Custom words file (placeholder for future implementation)
+		new Setting(containerEl)
+			.setName('Custom Words File')
+			.setDesc('Path to a custom file containing additional weasel words (one per line) - Coming soon!')
+			.addText(text => text
+				.setPlaceholder('Path to custom words file...')
+				.setValue(this.plugin.settings.customWordsFile)
+				.setDisabled(true)
+				.onChange(async (value) => {
+					this.plugin.settings.customWordsFile = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Highlight color
+		new Setting(containerEl)
+			.setName('Highlight Color')
+			.setDesc('Color used to highlight weasel words in results')
+			.addText(text => text
+				.setPlaceholder('#ff6b6b')
+				.setValue(this.plugin.settings.highlightColor)
+				.onChange(async (value) => {
+					this.plugin.settings.highlightColor = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Show line numbers
+		new Setting(containerEl)
+			.setName('Show Line Numbers')
+			.setDesc('Display line numbers in the results')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showLineNumbers)
+				.onChange(async (value) => {
+					this.plugin.settings.showLineNumbers = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Information section
+		const infoEl = containerEl.createEl('div', { cls: 'setting-item-info' });
+		infoEl.createEl('h3', { text: 'About Weasel Words' });
+		infoEl.createEl('p', {
+			text: 'Weasel words are terms that make your writing vague and less impactful. They include words like "very", "quite", "fairly", "several", and others that weaken your statements. This plugin helps you identify and eliminate them for clearer, more precise writing.'
+		});
+
+		// Reset to defaults
+		new Setting(containerEl)
+			.setName('Reset to Defaults')
+			.setDesc('Reset all settings to their default values')
+			.addButton(button => button
+				.setButtonText('Reset')
+				.onClick(async () => {
+					this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS);
+					await this.plugin.saveSettings();
+					this.display(); // Refresh the settings display
+					new Notice('Settings reset to defaults');
 				}));
 	}
 }
