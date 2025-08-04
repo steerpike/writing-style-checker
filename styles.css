@@ -57,10 +57,18 @@
 
 .weasel-highlight {
     font-weight: bold;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background-color: var(--weasel-highlight-color, #ff6b6b);
 }
 
 .passive-highlight {
     font-weight: bold;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background-color: var(--passive-highlight-color, #ffa500);
 }
 
 .weasel-buttons {
@@ -97,4 +105,9 @@
     color: var(--text-muted);
     line-height: 1.5;
     margin-bottom: 10px;
+}
+
+.setting-item-info strong {
+    color: var(--text-normal);
+    font-weight: 600;
 }

@@ -187,6 +187,10 @@ class WritingIssuesModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
+		// Set CSS custom properties for highlight colors
+		contentEl.style.setProperty('--weasel-highlight-color', this.settings.highlightColor);
+		contentEl.style.setProperty('--passive-highlight-color', this.settings.passiveHighlightColor);
+
 		// Title
 		contentEl.createEl('h2', { text: 'Writing Style Check Results' });
 
@@ -256,10 +260,6 @@ class WritingIssuesModal extends Modal {
 			text: match.word,
 			cls: 'weasel-highlight'
 		});
-		highlightEl.style.backgroundColor = this.settings.highlightColor;
-		highlightEl.style.color = 'white';
-		highlightEl.style.padding = '2px 4px';
-		highlightEl.style.borderRadius = '3px';
 		contextEl.appendText(afterWord);
 	}
 
@@ -284,10 +284,6 @@ class WritingIssuesModal extends Modal {
 			text: match.phrase,
 			cls: 'passive-highlight'
 		});
-		highlightEl.style.backgroundColor = this.settings.passiveHighlightColor;
-		highlightEl.style.color = 'white';
-		highlightEl.style.padding = '2px 4px';
-		highlightEl.style.borderRadius = '3px';
 		contextEl.appendText(afterPhrase);
 	}
 
@@ -387,13 +383,15 @@ class WritingStyleSettingTab extends PluginSettingTab {
 		infoEl.createEl('h3', { text: 'About Writing Issues' });
 
 		const weaselInfo = infoEl.createEl('p');
-		weaselInfo.innerHTML = '<strong>Weasel words</strong> are terms that make your writing vague and less impactful. They include words like "very", "quite", "fairly", "several", and others that weaken your statements.';
+		weaselInfo.createEl('strong', { text: 'Weasel words' });
+		weaselInfo.appendText(' are terms that make your writing vague and less impactful. They include words like "very", "quite", "fairly", "several", and others that weaken your statements.');
 
 		const passiveInfo = infoEl.createEl('p');
-		passiveInfo.innerHTML = '<strong>Passive voice</strong> occurs when the subject receives the action rather than performing it (e.g., "The report was written" vs. "I wrote the report"). While not always wrong, overuse can make writing less direct and engaging.';
+		passiveInfo.createEl('strong', { text: 'Passive voice' });
+		passiveInfo.appendText(' occurs when the subject receives the action rather than performing it (e.g., "The report was written" vs. "I wrote the report"). While not always wrong, overuse can make writing less direct and engaging.');
 
 		const generalInfo = infoEl.createEl('p');
-		generalInfo.innerHTML = 'This plugin helps you identify and eliminate these issues for clearer, more precise writing.';
+		generalInfo.appendText('This plugin helps you identify and eliminate these issues for clearer, more precise writing.');
 
 		// Reset to defaults
 		new Setting(containerEl)

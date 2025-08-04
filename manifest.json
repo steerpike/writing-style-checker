@@ -3,7 +3,7 @@
 	"name": "Writing Style Checker",
 	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
-	"description": "Checks your writing for weasel words and passive voice that makes text less precise and impactful.",
+	"description": "Checks your writing for weasel words and passive voice.",
 	"author": "Steerpike",
 	"authorUrl": "https://github.com/steerpike",
 	"isDesktopOnly": false
